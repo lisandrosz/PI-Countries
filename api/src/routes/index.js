@@ -1,45 +1,41 @@
 const { Router } = require("express");
-const { Country, Activities } = require("../db");
-const axios = require("axios");
-// Importar todos los routers;
-// Ejemplo: const authRouter = require('./auth.js');
+const {
+  cargaBaseDatos,
+  buscarPaisQuery,
+  buscarPaises,
+  crearActividad,
+  buscarPaisPk,
+} = require("../functions/utilities");
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
 let flag = true;
 const router = Router();
 
-/*
-En una primera instancia deberán traer todos los países desde restcountries y guardarlos en su propia base de datos y luego ya utilizarlos desde allí (Debe retonar sólo los datos necesarios para la ruta principal)
-Obtener un listado de los paises.
-*/
-
 router.get("/countries", async (req, res) => {
+  const { name } = req.query;
+  let response;
   try {
+    // Me pregunto si hay info en la db
     if (flag) {
-      let countries = [];
-      await axios.get("https://restcountries.com/v3.1/all").then((response) => {
-        countries = response.data;
-      });
-      countries = countries.map((country) => {
-        return {
-          id: country.cca3,
-          name: country.name.common,
-          image: country.flags.png,
-          continent: country.region,
-          capital: country.capital ? country.capital[0] : "N/A",
-          subregion: country.subregion ? country.subregion : "N/A",
-          area: country.area,
-          population: country.population,
-        };
-      });
-      await Country.bulkCreate(countries);
-      const response = await Country.findAll({
-        attributes: ["name", "continent", "image"],
-      });
-      flag = false;
+      await cargaBaseDatos();
+      // Me pregunto si me pasaron el nombre por query
+      if (name) {
+        response = await buscarPaisQuery(name);
+        flag = false;
+        if (response.length < 1) throw new Error("Pais no encontrado");
+      } else {
+        response = await buscarPaises();
+        flag = false;
+      }
       res.status(200).json(response);
     } else {
-      const response = await Country.findAll({
-        attributes: ["name", "continent", "image"],
-      });
+      // Me pregunto si me pasaron el nombre por query
+      if (name) {
+        response = await buscarPaisQuery(name);
+        if (response.length < 1) throw new Error("Pais no encontrado");
+      } else {
+        response = await buscarPaises();
+      }
       res.status(200).json(response);
     }
   } catch (error) {
@@ -50,14 +46,24 @@ router.get("/countries", async (req, res) => {
 router.post("/activities", async (req, res) => {
   try {
     const { name, dificult, duration, temp, idCountries } = req.body;
-    const newActivity = await Activities.create({
+    const newActivity = await crearActividad(
       name,
       dificult,
       duration,
       temp,
-    });
-    await newActivity.addCountries(idCountries);
+      idCountries
+    );
     res.status(200).json(newActivity);
+  } catch (error) {
+    res.status(404).send(error.message);
+  }
+});
+
+router.get("/countries/:idPais", async (req, res) => {
+  try {
+    const { idPais } = req.params;
+    const countryDetail = await buscarPaisPk(idPais);
+    res.status(200).json(countryDetail);
   } catch (error) {
     res.status(404).send(error.message);
   }
