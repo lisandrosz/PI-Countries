@@ -1,14 +1,14 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Container, BotonIngresar } from "../styles/styleLanding";
 
 const Landing = (props) => {
   return (
-    <>
-      <h1>Soy el landing</h1>
+    <Container>
       <Link to={"/home"}>
-        <button>Ingresar</button>
+        <BotonIngresar>Ingresar</BotonIngresar>
       </Link>
-    </>
+    </Container>
   );
 };
 
