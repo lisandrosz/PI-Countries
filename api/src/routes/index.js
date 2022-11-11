@@ -5,7 +5,7 @@ const {
   buscarPaises,
   crearActividad,
   buscarPaisPk,
-} = require("../functions/utilities");
+} = require("../controllers/controllers");
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 let flag = true;
